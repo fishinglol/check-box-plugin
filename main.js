@@ -1,4 +1,5 @@
 // Checkbox: a tick-off checklist inside a note. Type // on an empty line and choose Checkbox; tick items, edit their text, add and remove them.
+// Backspace on the only (empty) item, the × on the only item, or "Delete checklist" removes the whole block.
 // Plain JS, no dependencies. Stored as text between ```checkbox fences, so the note still reads (and syncs and diffs) as text:
 //
 //   [x] buy milk
@@ -33,6 +34,8 @@ body { font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; 
 .row.done .text { color: var(--text-dim, #6b7280); text-decoration: line-through; }
 .row .del { visibility: hidden; border: 0; background: none; color: var(--text-dim, #6b7280); cursor: pointer; font: inherit; padding: 0 4px; }
 .row:hover .del, .row:focus-within .del { visibility: visible; }
+.remove { margin: 2px 0 0 14px; border: 0; background: none; color: var(--text-dim, #6b7280); font: inherit; cursor: pointer; padding: 3px 0; visibility: hidden; }
+#app:hover .remove, .remove:focus { visibility: visible; }
 .add { margin-top: 2px; border: 0; background: none; color: var(--accent, #4285f4); font: inherit; font-weight: 600; cursor: pointer; padding: 3px 0; }
 `;
 
@@ -41,6 +44,7 @@ function mount(el, source, block) {
   if (items.length === 0) items = [{ done: false, text: "" }];
   el.append(Object.assign(document.createElement("style"), { textContent: CSS }));
   const app = document.createElement("div");
+  app.id = "app";
   el.append(app);
 
   const tell = () => block.resize(Math.ceil(app.getBoundingClientRect().height) + 10);
@@ -73,8 +77,9 @@ function mount(el, source, block) {
           e.preventDefault();
           if (items.length < MAX_ITEMS) items.splice(i + 1, 0, { done: false, text: "" });
           render(i + 1);
-        } else if (e.key === "Backspace" && text.value === "" && items.length > 1) {
+        } else if ((e.key === "Backspace" || e.key === "Delete") && text.value === "") {
           e.preventDefault();
+          if (items.length === 1) return block.remove(); // the last, empty item: the whole checklist goes
           items.splice(i, 1);
           save();
           render(Math.max(0, i - 1));
@@ -86,8 +91,8 @@ function mount(el, source, block) {
       del.setAttribute("aria-label", "Delete item");
       del.textContent = "×";
       del.addEventListener("click", () => {
+        if (items.length === 1) return block.remove(); // deleting the only item deletes the checklist
         items.splice(i, 1);
-        if (items.length === 0) items.push({ done: false, text: "" });
         save();
         render();
       });
@@ -103,7 +108,12 @@ function mount(el, source, block) {
       items.push({ done: false, text: "" });
       render(items.length - 1);
     });
-    app.append(add);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "remove";
+    remove.textContent = "Delete checklist";
+    remove.addEventListener("click", () => block.remove());
+    app.append(add, remove);
     if (focusIndex !== undefined) app.querySelectorAll(".text")[focusIndex]?.focus();
     tell();
   }
