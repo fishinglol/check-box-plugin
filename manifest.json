@@ -1,0 +1,14 @@
+{
+  "id": "checkbox",
+  "name": "Checkbox",
+  "version": "1.0.0",
+  "description": "A tick-off checklist inside a note. Type // on an empty line and choose Checkbox, tick items off, add and remove them right in the note. Stored as plain text.",
+  "tagline": "Type // for a tick-off checklist",
+  "author": "fishinglol",
+  "homepage": "https://github.com/fishinglol/check-box-plugin",
+  "minApiVersion": 4,
+  "permissions": [
+    "editor.blocks",
+    "editor.input"
+  ]
+}
